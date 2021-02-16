@@ -1,0 +1,32 @@
+﻿@page
+@model IndexModel
+@{
+    ViewData["Title"] = "Home page";
+}
+
+<div class="text-center">
+    <h1 class="display-4">Welcome</h1>
+    <p>Learn about <a href="https://docs.microsoft.com/aspnet/core">building Web apps with ASP.NET Core</a>.</p>
+    @Model.Message
+    <div>
+        <form method="POST">
+            @Html.TextAreaFor(m => m.Proto)
+            <div class="row">
+                <div class="col-lg-1">
+                    <form asp-page-handler="loadtypes" method="post">
+                        <button class="btn btn-default">Load Types</button>
+                    </form>
+                </div>
+            </div>
+            @if (Model.ExtractedTypes.Count > 0)
+            {
+                @Html.DropDownListFor(m => m.SelectedType, new SelectList(Model.ExtractedTypes.Select(i => i.FullName)))
+                @Html.TextAreaFor(m => m.HexMessage)
+            }
+            else
+            {
+                <div>No types found or types not loaded yet.</div>
+            }
+        </form>
+    </div>
+</div>
