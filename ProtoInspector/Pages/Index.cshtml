@@ -16,6 +16,7 @@
 }
 <div class="container">
     <form method="POST">
+        @Html.HiddenFor(m => m.Assembly);
         <h1 class="display-1">1. <small class="text-muted">Enter your proto description</small></h1>
         <div class="form-group row">
             <textarea asp-for="@Model.Proto" class="form-control" rows="10"></textarea>

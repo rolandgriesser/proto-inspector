@@ -30,11 +30,14 @@ namespace ProtoInspector.Pages
                 ErrorMessage = "You have to provide a proto description.";
                 return Page();
             }
+            var csharpContent = await Helpers.ProtoHelpers.CreateProtoClass(Proto);
             ExtractedTypes = new List<Type>() { typeof(String) };
             return Page();
         }
         [BindProperty]
         public string Proto { get; set; }
+        [BindProperty]
+        public string Assembly { get; set; }
         public List<Type> ExtractedTypes { get; set; } = new List<Type>();
         public SelectList ExtractedTypesItems => new SelectList(ExtractedTypes.Select(i => i.FullName));
         [BindProperty]
