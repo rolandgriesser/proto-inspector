@@ -4,6 +4,7 @@ using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
+using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.Extensions.Logging;
 
 namespace ProtoInspector.Pages
@@ -26,7 +27,7 @@ namespace ProtoInspector.Pages
         {
             if (string.IsNullOrEmpty(Proto))
             {
-                Message = "You have to provide a proto description.";
+                ErrorMessage = "You have to provide a proto description.";
                 return Page();
             }
             ExtractedTypes = new List<Type>() { typeof(String) };
@@ -35,26 +36,29 @@ namespace ProtoInspector.Pages
         [BindProperty]
         public string Proto { get; set; }
         public List<Type> ExtractedTypes { get; set; } = new List<Type>();
+        public SelectList ExtractedTypesItems => new SelectList(ExtractedTypes.Select(i => i.FullName));
         [BindProperty]
         public string SelectedType { get; set; }
         [BindProperty]
         public string HexMessage { get; set; }
+        [BindProperty]
+        public string JsonText { get; set; }
 
-        public string Message { get; set; }
+        public string ErrorMessage { get; set; }
 
         public async Task<IActionResult> OnPostParseMessageAsync()
         {
             if (string.IsNullOrEmpty(SelectedType))
             {
-                Message = "No type selected.";
+                ErrorMessage = "No type selected.";
                 return Page();
             }
             if (string.IsNullOrEmpty(HexMessage))
             {
-                Message = "No hex message provided.";
+                ErrorMessage = "No hex message provided.";
                 return Page();
             }
-            Message = SelectedType;
+            ErrorMessage = SelectedType;
             return Page();
         }
     }
