@@ -11,6 +11,9 @@ using System.Runtime.Loader;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.Emit;
+using System.Text.Json;
+using Google.Protobuf;
+using ProtoInspector.Helpers;
 
 namespace ProtoInspector.Tests
 {
@@ -87,9 +90,29 @@ namespace ProtoInspector.Tests
                     ms.Seek(0, SeekOrigin.Begin);
 
                     Assembly assembly = AssemblyLoadContext.Default.LoadFromStream(ms);
-                    var types = assembly.GetTypes();
+                    var john = new Tutorial.Person
+                    {
+                        Id = 1234,
+                        Name = "John Doe",
+                        Email = "jdoe@example.com",
+                        Phones = { new Tutorial.Person.Types.PhoneNumber { Number = "555-4321", Type = Tutorial.Person.Types.PhoneType.Home } }
+                    };
+                    System.Console.WriteLine(john.ToString());
+                    var ms1 = new MemoryStream();
+                    john.WriteTo(ms1);
+                    ms1.Seek(0, SeekOrigin.Begin);
+                    var bytearr = ms1.ToArray();
+                    var hexString = bytearr.ToHexString();
+                    System.Console.WriteLine(hexString);
+                    // john.WriteTo()
+                    //could also use mergeFrom;
 
-                    JsonSerializer.
+                    var john1 = Tutorial.Person.Parser.ParseFrom(hexString.HexToByteArray());
+                    System.Console.WriteLine(john1);
+                    // var types = assembly.GetType("Person");//.GetTypes(); of type IMessage
+                    // var type = assembly.GetTypes()[0];//.GetTypes();
+                    // var item = Activator.CreateInstance(type);
+                    // JsonSerializer.
                     // var exportedTypes = assembly.GetExportedTypes();
                     // var forwardedTypes = assembly.GetForwardedTypes();
                     // var type = assembly.GetType("RoslynCompileSample.Writer");
