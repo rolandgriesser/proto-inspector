@@ -1,11 +1,15 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
+using System.Reflection;
+using System.Runtime.Loader;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.Extensions.Logging;
+using ProtoInspector.Helpers;
 
 namespace ProtoInspector.Pages
 {
@@ -30,10 +34,24 @@ namespace ProtoInspector.Pages
                 ErrorMessage = "You have to provide a proto description.";
                 return Page();
             }
-            var csharpContent = await Helpers.ProtoHelpers.CreateProtoClass(Proto);
-            ExtractedTypes = new List<Type>() { typeof(String) };
+            var csharpCode = await Helpers.ProtoHelpers.CreateProtoClass(Proto);
+            var assemblyStream = Helpers.ReflectionHelpers.CreateAssemblyFromCode(csharpCode);
+            Assembly = assemblyStream.ToArray().ToHexString();
+            var assembly = LoadAssembly(assemblyStream);
+            ExtractedTypes = ReflectionHelpers.GetTypes<Google.Protobuf.IMessage>(assembly);
             return Page();
         }
+
+        private Assembly LoadAssembly(Stream stream)
+        {
+            return AssemblyLoadContext.Default.LoadFromStream(stream);
+        }
+        private Assembly LoadAssembly(string hexString)
+        {
+            var memoryStream = new MemoryStream(hexString.HexToByteArray());
+            return LoadAssembly(memoryStream);
+        }
+
         [BindProperty]
         public string Proto { get; set; }
         [BindProperty]
