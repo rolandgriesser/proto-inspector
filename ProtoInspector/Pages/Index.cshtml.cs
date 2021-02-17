@@ -39,12 +39,18 @@ namespace ProtoInspector.Pages
             Assembly = assemblyStream.ToArray().ToHexString();
             var assembly = LoadAssembly(assemblyStream);
             ExtractedTypes = ReflectionHelpers.GetTypes<Google.Protobuf.IMessage>(assembly);
+            if (ExtractedTypes.Count == 0)
+            {
+                ErrorMessage = "Couldn't find any types that implement Google.Protobuf.IMessage in assembly.";
+            }
             return Page();
         }
 
         private Assembly LoadAssembly(Stream stream)
         {
-            return AssemblyLoadContext.Default.LoadFromStream(stream);
+            var assembly = AssemblyLoadContext.Default.LoadFromStream(stream);
+            System.Console.WriteLine("Successfully loaded assembly from stream.");
+            return assembly;
         }
         private Assembly LoadAssembly(string hexString)
         {

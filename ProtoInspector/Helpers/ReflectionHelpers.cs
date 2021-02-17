@@ -22,7 +22,9 @@ namespace ProtoInspector.Helpers
 
         public static MemoryStream CreateAssemblyFromCode(string code)
         {
+            System.Console.WriteLine("Parsing C# syntax tree...");
             var syntaxTree = CSharpSyntaxTree.ParseText(code);
+            System.Console.WriteLine("Parsed syntax tree.");
 
             var assemblyName = Path.GetRandomFileName();
 
@@ -40,7 +42,7 @@ namespace ProtoInspector.Helpers
             // foreach (var r in refPaths)
             //     Write(r);
 
-            // Write("Compiling ...");
+            System.Console.WriteLine("Compiling assembly...");
             var compilation = CSharpCompilation.Create(
                 assemblyName,
                 syntaxTrees: new[] { syntaxTree },
@@ -63,6 +65,7 @@ namespace ProtoInspector.Helpers
 
                 throw new Exception("Couldn't create compilation from code.");
             }
+            System.Console.WriteLine("Successfully compilated assembly.");
             ms.Seek(0, SeekOrigin.Begin);
             return ms;
         }
