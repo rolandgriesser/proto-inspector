@@ -39,7 +39,7 @@
             </div>
             <div class="row">
                 <div class="col-5">
-                    <textarea asp-for="@Model.HexMessage" class="form-control" rows="10"></textarea>
+                    <textarea id="HexMessage" name="HexMessage" class="form-control" rows="10">@Model.HexMessage</textarea>
                 </div>
                 <div class="col-2 text-center">
                     <button asp-page-handler="tojson" class="btn btn-primary text-center"><i
@@ -48,7 +48,7 @@
                             class="fas fa-angle-double-left mr-2"></i>From Json</button>
                 </div>
                 <div class="col-5">
-                    <textarea asp-for="@Model.JsonText" class="form-control" rows="10"></textarea>
+                    <textarea id="JsonText" name="JsonText" class="form-control" rows="10">@Model.JsonText</textarea>
                 </div>
             </div>
         }

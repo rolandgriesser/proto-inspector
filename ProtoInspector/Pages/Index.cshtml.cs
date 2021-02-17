@@ -6,6 +6,7 @@ using System.Reflection;
 using System.Runtime.Loader;
 using System.Text.Json;
 using System.Threading.Tasks;
+using Google.Protobuf;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using Microsoft.AspNetCore.Mvc.Rendering;
@@ -77,44 +78,38 @@ namespace ProtoInspector.Pages
 
         public string ErrorMessage { get; set; }
 
-        public async Task<IActionResult> OnPostToJsonAsync()
+        public IActionResult OnPostToJson()
         {
-            if (string.IsNullOrEmpty(SelectedType))
-            {
-                ErrorMessage = "No type selected.";
-                return Page();
-            }
-            if (string.IsNullOrEmpty(HexMessage))
-            {
-                ErrorMessage = "No hex message provided.";
-                return Page();
-            }
-            ErrorMessage = SelectedType;
-            return Page();
-        }
-        public async Task<IActionResult> OnPostFromJsonAsync()
-        {
-            if (string.IsNullOrEmpty(Assembly))
-            {
-                ErrorMessage = "Assembly not loaded.";
-                return Page();
-            }
-            if (string.IsNullOrEmpty(SelectedType))
-            {
-                ErrorMessage = "No type selected.";
-                return Page();
-            }
-
-            var assembly = LoadAssembly(Assembly);
-            ExtractedTypes = ReflectionHelpers.GetTypes<Google.Protobuf.IMessage>(assembly).ToList();
-            var type = assembly.GetType(SelectedType);
+            var type = LoadTypeFromAssembly();
             if (type == null)
+                return Page();
+
+            var protoObject = Activator.CreateInstance(type);
+            if (protoObject == null)
             {
-                ErrorMessage = $"Couldn't find type {SelectedType} in loaded assembly";
+                ErrorMessage = "Couldn't create object of the specified type.";
                 System.Console.WriteLine(ErrorMessage);
                 return Page();
             }
-            System.Console.WriteLine($"Successfully loaded type {SelectedType} from assembly.");
+            System.Console.WriteLine("Successfully created object of specified type.");
+            if (!(protoObject is Google.Protobuf.IMessage message))
+            {
+                ErrorMessage = "Created object doesn't implement Google.Protobuf.IMessage.";
+                System.Console.WriteLine(ErrorMessage);
+                return Page();
+            }
+            var ms = new MemoryStream(HexMessage.HexToByteArray());
+            message.MergeFrom(ms);
+            System.Console.WriteLine("Successfully merged data.");
+            JsonText = JsonSerializer.Serialize(message, type);
+            return Page();
+        }
+        public IActionResult OnPostFromJson()
+        {
+            var type = LoadTypeFromAssembly();
+            if (type == null)
+                return Page();
+
             var jsonText = string.IsNullOrEmpty(JsonText) ? "{}" : JsonText;
             var deserializedObject = JsonSerializer.Deserialize(jsonText, type);
             if (deserializedObject == null)
@@ -124,7 +119,42 @@ namespace ProtoInspector.Pages
                 return Page();
             }
             System.Console.WriteLine($"Successfully deserialized object: {deserializedObject.ToString()}.");
+            if (!(deserializedObject is Google.Protobuf.IMessage message))
+            {
+                ErrorMessage = "Deserialized object doesn't implement Google.Protobuf.IMessage.";
+                System.Console.WriteLine(ErrorMessage);
+                return Page();
+            }
+            var ms = new MemoryStream();
+            message.WriteTo(ms);
+            HexMessage = ms.ToArray().ToHexString();
             return Page();
+        }
+
+        private Type LoadTypeFromAssembly()
+        {
+            if (string.IsNullOrEmpty(Assembly))
+            {
+                ErrorMessage = "Assembly not loaded.";
+                return null;
+            }
+            if (string.IsNullOrEmpty(SelectedType))
+            {
+                ErrorMessage = "No type selected.";
+                return null;
+            }
+
+            var assembly = LoadAssembly(Assembly);
+            ExtractedTypes = ReflectionHelpers.GetTypes<Google.Protobuf.IMessage>(assembly).ToList();
+            var type = assembly.GetType(SelectedType);
+            if (type == null)
+            {
+                ErrorMessage = $"Couldn't find type {SelectedType} in loaded assembly";
+                System.Console.WriteLine(ErrorMessage);
+                return null;
+            }
+            System.Console.WriteLine($"Successfully loaded type {SelectedType} from assembly.");
+            return type;
         }
     }
 }
