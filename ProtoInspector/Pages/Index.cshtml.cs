@@ -98,7 +98,7 @@ namespace ProtoInspector.Pages
                 System.Console.WriteLine(ErrorMessage);
                 return Page();
             }
-            var ms = new MemoryStream(HexMessage.HexToByteArray());
+            var ms = new MemoryStream((HexMessage ?? "").HexToByteArray());
             message.MergeFrom(ms);
             System.Console.WriteLine("Successfully merged data.");
             JsonText = JsonSerializer.Serialize(message, type);
