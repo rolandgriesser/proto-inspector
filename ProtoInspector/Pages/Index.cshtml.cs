@@ -4,6 +4,7 @@ using System.IO;
 using System.Linq;
 using System.Reflection;
 using System.Runtime.Loader;
+using System.Text.Json;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
@@ -37,6 +38,7 @@ namespace ProtoInspector.Pages
             var csharpCode = await Helpers.ProtoHelpers.CreateProtoClass(Proto);
             var assemblyStream = Helpers.ReflectionHelpers.CreateAssemblyFromCode(csharpCode);
             Assembly = assemblyStream.ToArray().ToHexString();
+            System.Console.WriteLine("Set Assembly property to: " + Assembly.Substring(0, 20) + "...");
             var assembly = LoadAssembly(assemblyStream);
             ExtractedTypes = ReflectionHelpers.GetTypes<Google.Protobuf.IMessage>(assembly).ToList();
             System.Console.WriteLine($"Found {ExtractedTypes.Count} classes that implement Google.Protobuf.IMessage:");
@@ -75,7 +77,7 @@ namespace ProtoInspector.Pages
 
         public string ErrorMessage { get; set; }
 
-        public async Task<IActionResult> OnPostParseMessageAsync()
+        public async Task<IActionResult> OnPostToJsonAsync()
         {
             if (string.IsNullOrEmpty(SelectedType))
             {
@@ -88,6 +90,40 @@ namespace ProtoInspector.Pages
                 return Page();
             }
             ErrorMessage = SelectedType;
+            return Page();
+        }
+        public async Task<IActionResult> OnPostFromJsonAsync()
+        {
+            if (string.IsNullOrEmpty(Assembly))
+            {
+                ErrorMessage = "Assembly not loaded.";
+                return Page();
+            }
+            if (string.IsNullOrEmpty(SelectedType))
+            {
+                ErrorMessage = "No type selected.";
+                return Page();
+            }
+
+            var assembly = LoadAssembly(Assembly);
+            ExtractedTypes = ReflectionHelpers.GetTypes<Google.Protobuf.IMessage>(assembly).ToList();
+            var type = assembly.GetType(SelectedType);
+            if (type == null)
+            {
+                ErrorMessage = $"Couldn't find type {SelectedType} in loaded assembly";
+                System.Console.WriteLine(ErrorMessage);
+                return Page();
+            }
+            System.Console.WriteLine($"Successfully loaded type {SelectedType} from assembly.");
+            var jsonText = string.IsNullOrEmpty(JsonText) ? "{}" : JsonText;
+            var deserializedObject = JsonSerializer.Deserialize(jsonText, type);
+            if (deserializedObject == null)
+            {
+                ErrorMessage = "Couldn't deserialize Json.";
+                System.Console.WriteLine(ErrorMessage);
+                return Page();
+            }
+            System.Console.WriteLine($"Successfully deserialized object: {deserializedObject.ToString()}.");
             return Page();
         }
     }
