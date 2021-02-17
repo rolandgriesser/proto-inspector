@@ -38,7 +38,9 @@ namespace ProtoInspector.Pages
             var assemblyStream = Helpers.ReflectionHelpers.CreateAssemblyFromCode(csharpCode);
             Assembly = assemblyStream.ToArray().ToHexString();
             var assembly = LoadAssembly(assemblyStream);
-            ExtractedTypes = ReflectionHelpers.GetTypes<Google.Protobuf.IMessage>(assembly);
+            ExtractedTypes = ReflectionHelpers.GetTypes<Google.Protobuf.IMessage>(assembly).ToList();
+            System.Console.WriteLine($"Found {ExtractedTypes.Count} classes that implement Google.Protobuf.IMessage:");
+            System.Console.WriteLine(string.Join('\n', ExtractedTypes));
             if (ExtractedTypes.Count == 0)
             {
                 ErrorMessage = "Couldn't find any types that implement Google.Protobuf.IMessage in assembly.";

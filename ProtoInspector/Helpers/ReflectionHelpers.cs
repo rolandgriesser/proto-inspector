@@ -70,9 +70,16 @@ namespace ProtoInspector.Helpers
             return ms;
         }
 
-        public static List<Type> GetTypes<T>(Assembly assembly)
+        public static IEnumerable<Type> GetTypes<T>(Assembly assembly)
         {
-            return assembly.GetTypes().Where(i => i.IsAssignableFrom(typeof(T))).ToList();
+            var typeName = typeof(T).FullName;
+            foreach (var item in assembly.GetTypes())
+            {
+                var assignableFrom = item.IsAssignableFrom(typeof(T));
+                var implementsInterface = item.GetInterfaces().Any(i => i.FullName == typeName);
+                if (assignableFrom || implementsInterface)
+                    yield return item;
+            }
         }
     }
 }
